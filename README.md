@@ -54,7 +54,7 @@ Para que a API se conecte ao seu banco de dados PostgreSQL, é preciso configura
   },
   "AllowedHosts": "*",
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Database=desafio_muralis_db;Username=postgres;Password=sua_senha_aqui"
+    "DefaultConnection": "Host=localhost;Port=porta_do_postgres;Database=desafio_muralis_db;Username=postgres;Password=sua_senha_aqui"
   }
 }
 ```
@@ -65,7 +65,20 @@ Para que a API se conecte ao seu banco de dados PostgreSQL, é preciso configura
 * **Username**: O usuário do PostgreSQL (o padrão geralmente é `postgres`).
 * **Password**: **Substitua `"sua_senha_aqui"`** pela senha que você configurou para o seu usuário do PostgreSQL.
 
-### 4. Aplique as Migrations
+### 4. Criando uma Migration
+
+Com a conexão ao banco de dados já configurada no `appsettings.json`, você pode criar uma migration para gerar o modelo inicial do banco de dados com base nas classes de entidade da aplicação.
+
+#### Passos para criar uma migration:
+
+1. **Abra um terminal** na raiz do projeto principal (`Muralis.Desafio.Api`), onde está definido o `DbContext`.
+
+2. Execute o comando abaixo para gerar uma migration (substitua `NomeDaMigration` por um nome significativo como `Inicial`, `AddCliente`, etc):
+
+   ```bash
+   dotnet ef migrations add NomeDaMigration
+
+### 5. Aplique as Migrations
 
 Com a conexão configurada, o próximo passo é criar a estrutura de tabelas no banco de dados. Isso é feito com o comando de migrations do Entity Framework, que lê os arquivos da pasta `Migrations`.
 
