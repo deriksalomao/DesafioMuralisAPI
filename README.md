@@ -89,7 +89,7 @@ dotnet ef database update
 ```
 Este comando irá ler o histórico de alterações e aplicar o schema mais recente ao banco de dados.
 
-### 5. Execute a API
+### 6. Execute a API
 
 Com o banco de dados pronto, inicie a aplicação com o seguinte comando:
 
