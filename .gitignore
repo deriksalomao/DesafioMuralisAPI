@@ -1,0 +1,38 @@
+﻿
+# Visual Studio
+
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+vs-project-config.log
+
+
+# Build
+
+[Bb]in/
+[Oo]bj/
+
+
+# Rider
+
+.idea/
+
+
+# Outros
+
+*.log
+*.DS_Store
+
+
+# Arquivos de publicação
+
+[Pp]ublish/
+[Rr]elease/
+
+
+# Ignorando arquivos de configuração e migrations
+
+appsettings.json
+Migrations/
