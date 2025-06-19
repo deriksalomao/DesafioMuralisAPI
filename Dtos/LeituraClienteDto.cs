@@ -3,7 +3,7 @@
     /// <summary>
     /// DTO para a leitura dos dados de um cliente.
     /// </summary>
-    public class ClienteReadDto
+    public class LeituraClienteDto
     {
         /// <summary>
         /// Identificador único do cliente.

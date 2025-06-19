@@ -12,6 +12,6 @@ namespace Muralis.Desafio.Api.Services.Interfaces
         /// </summary>
         /// <param name="cep">O CEP a ser consultado (deve conter apenas números).</param>
         /// <returns>Um objeto com os dados do endereço ou null se o CEP não for encontrado.</returns>
-        Task<ViaCepResponse?> GetAddressByCepAsync(string cep);
+        Task<RespostaViaCepDto?> ObtemEnderecoPorCep(string cep);
     }
 }

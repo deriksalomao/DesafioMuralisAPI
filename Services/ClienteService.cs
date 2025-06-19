@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿using System.Text.RegularExpressions;
+using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Muralis.Desafio.Api.Data;
 using Muralis.Desafio.Api.Dtos;
@@ -28,49 +30,47 @@ namespace Muralis.Desafio.Api.Services
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<ClienteReadDto>> GetAllAsync()
+        public async Task<IEnumerable<LeituraClienteDto>> ListaClientes()
         {
             var clientes = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
                 .ToListAsync();
-            return _mapper.Map<IEnumerable<ClienteReadDto>>(clientes);
+            return _mapper.Map<IEnumerable<LeituraClienteDto>>(clientes);
         }
 
         /// <inheritdoc />
-        public async Task<ClienteReadDto?> GetByIdAsync(int id)
+        public async Task<LeituraClienteDto?> ObtemClientePorId(int id)
         {
             var cliente = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
-            if (cliente == null)
-            {
-                throw new ResourceNotFoundException($"Cliente com ID {id} não foi encontrado.");
-            }
-            return _mapper.Map<ClienteReadDto>(cliente);
+            return _mapper.Map<LeituraClienteDto>(cliente);
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<ClienteReadDto>> SearchByNameAsync(string name)
+        public async Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string name)
         {
             var clientes = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
                 .Where(c => c.Nome.Contains(name))
                 .ToListAsync();
-            return _mapper.Map<IEnumerable<ClienteReadDto>>(clientes);
+            return _mapper.Map<IEnumerable<LeituraClienteDto>>(clientes);
         }
 
         /// <inheritdoc />
-        /// <exception cref="CepValidationException">Lançada quando o CEP fornecido não é encontrado ou é inválido.</exception>
-        public async Task<ClienteReadDto> CreateAsync(ClienteCreateDto clienteDto)
+        public async Task<LeituraClienteDto> CriaCliente(CriaClienteDto clienteDto)
         {
-            var addressFromViaCep = await _viaCepService.GetAddressByCepAsync(clienteDto.Endereco.Cep);
+            if (!ValidarCep(clienteDto.Endereco.Cep))
+                throw new InvalidOperationException("O CEP informado é inválido.");
+
+            var addressFromViaCep = await _viaCepService.ObtemEnderecoPorCep(clienteDto.Endereco.Cep);
             if (addressFromViaCep == null || string.IsNullOrEmpty(addressFromViaCep.Logradouro))
             {
-                throw new CepValidationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado ou inválido.");
+                throw new InvalidOperationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado");
             }
 
             var cliente = _mapper.Map<Cliente>(clienteDto);
@@ -81,14 +81,15 @@ namespace Muralis.Desafio.Api.Services
 
             _context.Clientes.Add(cliente);
             await _context.SaveChangesAsync();
-            return _mapper.Map<ClienteReadDto>(cliente);
+            return _mapper.Map<LeituraClienteDto>(cliente);
         }
 
         /// <inheritdoc />
-        /// <exception cref="ResourceNotFoundException">Lançada se o cliente com o ID especificado não for encontrado.</exception>
-        /// <exception cref="CepValidationException">Lançada quando o CEP fornecido não é encontrado ou é inválido.</exception>
-        public async Task<bool> UpdateAsync(int id, UpdateClienteDto clienteDto)
+        public async Task<bool> AtualizaCliente(int id, AtualizaClienteDto clienteDto)
         {
+            if (!ValidarCep(clienteDto.Endereco.Cep))
+                throw new InvalidOperationException("O CEP informado é inválido.");
+
             var cliente = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
@@ -96,17 +97,16 @@ namespace Muralis.Desafio.Api.Services
 
             if (cliente == null)
             {
-                throw new ResourceNotFoundException($"Cliente com ID {id} não foi encontrado para atualização.");
+                return false;
             }
-
-            var addressFromViaCep = await _viaCepService.GetAddressByCepAsync(clienteDto.Endereco.Cep);
+            var addressFromViaCep = await _viaCepService.ObtemEnderecoPorCep(clienteDto.Endereco.Cep);
             if (addressFromViaCep == null || string.IsNullOrEmpty(addressFromViaCep.Logradouro))
             {
-                throw new CepValidationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado ou inválido.");
+                throw new InvalidOperationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado ou inválido.");
             }
 
             _mapper.Map(clienteDto, cliente);
-            UpdateContatos(clienteDto.Contatos, cliente.Contatos);
+            AtualizaContatos(clienteDto.Contatos, cliente.Contatos);
             cliente.Endereco.Logradouro = addressFromViaCep.Logradouro;
             cliente.Endereco.Cidade = addressFromViaCep.Localidade;
 
@@ -115,13 +115,12 @@ namespace Muralis.Desafio.Api.Services
         }
 
         /// <inheritdoc />
-        /// <exception cref="ResourceNotFoundException">Lançada se o cliente com o ID especificado não for encontrado.</exception>
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> RemoveCliente(int id)
         {
             var cliente = await _context.Clientes.FindAsync(id);
             if (cliente == null)
             {
-                throw new ResourceNotFoundException($"Cliente com ID {id} não foi encontrado para exclusão.");
+                return false;
             }
 
             _context.Clientes.Remove(cliente);
@@ -129,7 +128,7 @@ namespace Muralis.Desafio.Api.Services
             return true;
         }
 
-        private void UpdateContatos(ICollection<ContatoDto> contatosDto, ICollection<Contato> contatosExistentes)
+        private void AtualizaContatos(ICollection<ContatoDto> contatosDto, ICollection<Contato> contatosExistentes)
         {
             var contatosParaRemover = contatosExistentes
                 .Where(c => !contatosDto.Any(dto => dto.Tipo == c.Tipo && dto.Texto == c.Texto))
@@ -145,6 +144,15 @@ namespace Muralis.Desafio.Api.Services
             {
                 contatosExistentes.Add(novoContato);
             }
+        }
+
+        private static bool ValidarCep(string cep)
+        {
+            string cepNumerico = Regex.Replace(cep ?? "", @"[^\d]", "");
+
+            return cepNumerico.Length == 8 &&
+                   !Regex.IsMatch(cepNumerico, @"^(\d)\1+$") &&
+                   cepNumerico != "00000000";
         }
     }
 }

@@ -3,7 +3,7 @@
     /// <summary>
     /// DTO para a criação de um novo cliente.
     /// </summary>
-    public class ClienteCreateDto
+    public class CriaClienteDto
     {
         /// <summary>
         /// Nome do cliente.

@@ -27,7 +27,7 @@ namespace Muralis.Desafio.Api.Services
         /// A tag <c>inheritdoc</c> abaixo herda a documentação da interface <see cref="IViaCepService"/>.
         /// </remarks>
         /// <inheritdoc />
-        public async Task<ViaCepResponse?> GetAddressByCepAsync(string cep)
+        public async Task<RespostaViaCepDto?> ObtemEnderecoPorCep(string cep)
         {
             // Altera a URL para http para contornar possíveis problemas de bloqueio de SSL/TLS em ambientes de desenvolvimento.
             var response = await _httpClient.GetAsync($"http://viacep.com.br/ws/{cep}/json/");
@@ -39,9 +39,9 @@ namespace Muralis.Desafio.Api.Services
 
             var content = await response.Content.ReadAsStringAsync();
             // A desserialização é case-insensitive por padrão, então não há problema com as propriedades do DTO.
-            var viaCepResponse = JsonSerializer.Deserialize<ViaCepResponse>(content);
+            var RespostaViaCepDto = JsonSerializer.Deserialize<RespostaViaCepDto>(content);
 
-            return viaCepResponse;
+            return RespostaViaCepDto;
         }
     }
 }

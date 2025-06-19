@@ -11,16 +11,6 @@
         public string Cep { get; set; }
 
         /// <summary>
-        /// Logradouro (preenchido pelo ViaCep).
-        /// </summary>
-        public string? Logradouro { get; set; }
-
-        /// <summary>
-        /// Cidade (preenchido pelo ViaCep).
-        /// </summary>
-        public string? Cidade { get; set; }
-
-        /// <summary>
         /// Número do imóvel no endereço.
         /// </summary>
         public string? Numero { get; set; }

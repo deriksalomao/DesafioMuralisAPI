@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Muralis.Desafio.Api.Dtos;
+using Muralis.Desafio.Api.Models;
 using Muralis.Desafio.Api.Services.Interfaces;
 
 namespace Muralis.Desafio.Api.Controllers
@@ -29,9 +30,9 @@ namespace Muralis.Desafio.Api.Controllers
         /// <response code="200">Retorna a lista de clientes.</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ClienteReadDto>>> GetAllClientes()
+        public async Task<ActionResult<IEnumerable<LeituraClienteDto>>> ListaClientes()
         {
-            var clientes = await _clienteService.GetAllAsync();
+            var clientes = await _clienteService.ListaClientes();
             return Ok(clientes);
         }
 
@@ -45,9 +46,13 @@ namespace Muralis.Desafio.Api.Controllers
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ClienteReadDto>> GetClienteById(int id)
+        public async Task<ActionResult<LeituraClienteDto>> ObtemClientePorId(int id)
         {
-            var cliente = await _clienteService.GetByIdAsync(id);
+            var cliente = await _clienteService.ObtemClientePorId(id);
+
+            if (cliente == null)
+                return NotFound($"Cliente com ID {id} não foi encontrado.");
+
             return Ok(cliente);
         }
 
@@ -59,9 +64,9 @@ namespace Muralis.Desafio.Api.Controllers
         /// <response code="200">Retorna a lista de clientes encontrados.</response>
         [HttpGet("pesquisar")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ClienteReadDto>>> PesquisarClientePorNome([FromQuery] string nome)
+        public async Task<ActionResult<IEnumerable<LeituraClienteDto>>> BuscaClientePorNome([FromQuery] string nome)
         {
-            var clientes = await _clienteService.SearchByNameAsync(nome);
+            var clientes = await _clienteService.BuscaClientePorNome(nome);
             return Ok(clientes);
         }
 
@@ -78,10 +83,10 @@ namespace Muralis.Desafio.Api.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CadastrarCliente([FromBody] ClienteCreateDto clienteDto)
+        public async Task<IActionResult> CriaCliente([FromBody] CriaClienteDto clienteDto)
         {
-            var novoCliente = await _clienteService.CreateAsync(clienteDto);
-            return CreatedAtAction(nameof(GetClienteById), new { id = novoCliente.Id }, novoCliente);
+            var novoCliente = await _clienteService.CriaCliente(clienteDto);
+            return CreatedAtAction(nameof(ObtemClientePorId), new { id = novoCliente.Id }, novoCliente);
         }
 
         /// <summary>
@@ -97,9 +102,13 @@ namespace Muralis.Desafio.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> AlterarCliente(int id, [FromBody] UpdateClienteDto clienteDto)
+        public async Task<IActionResult> AtualizaCliente(int id, [FromBody] AtualizaClienteDto clienteDto)
         {
-            await _clienteService.UpdateAsync(id, clienteDto);
+            bool clienteEncontradoEAtualizado = await _clienteService.AtualizaCliente(id, clienteDto);
+
+            if (clienteEncontradoEAtualizado == false)
+                return NotFound($"Cliente com ID {id} não foi encontrado.");
+
             return NoContent();
         }
 
@@ -113,9 +122,13 @@ namespace Muralis.Desafio.Api.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DeletarCliente(int id)
+        public async Task<IActionResult> RemoveCliente(int id)
         {
-            await _clienteService.DeleteAsync(id);
+            bool clienteEncontradoEDeletado = await _clienteService.RemoveCliente(id);
+            
+            if (clienteEncontradoEDeletado == false)
+                return NotFound($"Cliente com ID {id} não foi encontrado.");
+
             return NoContent();
         }
     }

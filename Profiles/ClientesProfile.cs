@@ -15,14 +15,14 @@ namespace Muralis.Desafio.Api.Profiles
         public ClientesProfile()
         {
             // Mapeamentos de DTO para Modelo
-            CreateMap<ClienteCreateDto, Cliente>();
-            CreateMap<UpdateClienteDto, Cliente>()
+            CreateMap<CriaClienteDto, Cliente>();
+            CreateMap<AtualizaClienteDto, Cliente>()
                 .ForMember(dest => dest.Id, opt => opt.Ignore()); // Ignora o ID na atualização
             CreateMap<ContatoDto, Contato>();
             CreateMap<EnderecoDto, Endereco>();
 
             // Mapeamentos de Modelo para DTO
-            CreateMap<Cliente, ClienteReadDto>();
+            CreateMap<Cliente, LeituraClienteDto>();
             CreateMap<Contato, ContatoDto>();
             CreateMap<Endereco, EnderecoDto>();
         }

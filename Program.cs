@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Muralis.Desafio.Api.Data;
 using Muralis.Desafio.Api.Services;
@@ -28,6 +29,23 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = 500;
+
+        var exception = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+
+        await context.Response.WriteAsJsonAsync(new
+        {
+            erro = exception?.Message ?? "Erro desconhecido."
+        });
+    });
+});
+
 
 app.UseHttpsRedirection();
 app.UseAuthorization();

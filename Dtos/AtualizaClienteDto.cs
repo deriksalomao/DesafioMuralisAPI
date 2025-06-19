@@ -3,7 +3,7 @@
     /// <summary>
     /// DTO para a atualização de um cliente existente.
     /// </summary>
-    public class UpdateClienteDto
+    public class AtualizaClienteDto
     {
         /// <summary>
         /// Novo nome do cliente.

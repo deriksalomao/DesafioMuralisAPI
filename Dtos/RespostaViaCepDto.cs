@@ -5,7 +5,7 @@ namespace Muralis.Desafio.Api.Dtos
     /// <summary>
     /// Representa a resposta da API externa ViaCep.
     /// </summary>
-    public class ViaCepResponse
+    public class RespostaViaCepDto
     {
         /// <summary>
         /// CEP retornado pela API.
