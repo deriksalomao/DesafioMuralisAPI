@@ -8,6 +8,12 @@ namespace Muralis.Desafio.Api.Dtos
     public class RespostaViaCepDto
     {
         /// <summary>
+        /// Indica se a consulta de CEP resultou em erro.
+        /// </summary>
+        [JsonPropertyName("erro")]
+        public bool Erro { get; set; }
+
+        /// <summary>
         /// CEP retornado pela API.
         /// </summary>
         [JsonPropertyName("cep")]

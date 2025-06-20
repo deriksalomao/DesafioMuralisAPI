@@ -23,7 +23,7 @@
         /// <summary>
         /// Endereço do cliente.
         /// </summary>
-        public EnderecoDto Endereco { get; set; }
+        public EnderecoRetornoDto Endereco { get; set; }
 
         /// <summary>
         /// Lista de contatos do cliente.

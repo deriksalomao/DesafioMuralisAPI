@@ -8,49 +8,52 @@ namespace Muralis.Desafio.Api.Services.Interfaces
     public interface IClienteService
     {
         /// <summary>
-        /// Obtém todos os clientes cadastrados de forma assíncrona.
+        /// Obtém uma lista de todos os clientes.
         /// </summary>
-        /// <returns>Uma coleção de DTOs representando todos os clientes.</returns>
+        /// <returns>Uma coleção de DTOs de leitura de clientes.</returns>
         Task<IEnumerable<LeituraClienteDto>> ListaClientes();
 
         /// <summary>
-        /// Busca um cliente específico pelo seu ID de forma assíncrona.
+        /// Obtém um cliente específico pelo seu ID.
         /// </summary>
-        /// <param name="id">O ID do cliente a ser buscado.</param>
-        /// <returns>Um DTO com os dados do cliente encontrado ou null se não for encontrado.</returns>
+        /// <param name="id">O ID do cliente.</param>
+        /// <returns>O DTO de leitura do cliente ou nulo se não for encontrado.</returns>
         Task<LeituraClienteDto?> ObtemClientePorId(int id);
 
         /// <summary>
-        /// Pesquisa clientes cujo nome contém o texto fornecido.
+        /// Busca clientes por nome de forma case-insensitive.
         /// </summary>
-        /// <param name="name">O texto a ser pesquisado no nome dos clientes.</param>
-        /// <returns>Uma coleção de DTOs dos clientes que correspondem ao critério de busca.</returns>
-        Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string name);
+        /// <param name="nome">O nome ou parte do nome a ser pesquisado.</param>
+        /// <returns>Uma coleção de DTOs de leitura dos clientes encontrados.</returns>
+        Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string nome);
 
         /// <summary>
-        /// Cria um novo cliente no sistema.
+        /// Verifica se um cliente com o nome especificado já existe (case-insensitive).
         /// </summary>
-        /// <param name="clienteDto">Objeto com os dados para a criação do novo cliente.</param>
-        /// <returns>Um DTO com os dados do cliente recém-criado.</returns>
-        /// <exception cref="ExcecaoValidacaoCep">Lançada quando o CEP fornecido não é encontrado ou é inválido.</exception>
+        /// <param name="nome">O nome do cliente a ser verificado.</param>
+        /// <returns>Retorna verdadeiro se o cliente já existe, caso contrário, falso.</returns>
+        Task<bool> ClienteJaExiste(string nome);
+
+        /// <summary>
+        /// Cria um novo cliente.
+        /// </summary>
+        /// <param name="clienteDto">O DTO com os dados para a criação do cliente.</param>
+        /// <returns>O DTO de leitura do cliente recém-criado.</returns>
         Task<LeituraClienteDto> CriaCliente(CriaClienteDto clienteDto);
 
         /// <summary>
-        /// Atualiza os dados de um cliente existente.
+        /// Atualiza um cliente existente.
         /// </summary>
         /// <param name="id">O ID do cliente a ser atualizado.</param>
-        /// <param name="clienteDto">Objeto com os novos dados do cliente.</param>
-        /// <returns>Um booleano indicando se a operação foi bem-sucedida.</returns>
-        /// <exception cref="ExcecaoRecursoNaoEncontrado ">Lançada se o cliente com o ID especificado não for encontrado.</exception>
-        /// <exception cref="ExcecaoValidacaoCep">Lançada quando o CEP fornecido não é encontrado ou é inválido.</exception>
+        /// <param name="clienteDto">O DTO com os dados atualizados.</param>
+        /// <returns>Retorna verdadeiro se a atualização for bem-sucedida, caso contrário, falso.</returns>
         Task<bool> AtualizaCliente(int id, AtualizaClienteDto clienteDto);
 
         /// <summary>
-        /// Deleta um cliente do sistema.
+        /// Remove um cliente pelo seu ID.
         /// </summary>
-        /// <param name="id">O ID do cliente a ser deletado.</param>
-        /// <returns>Um booleano indicando se a operação foi bem-sucedida.</returns>
-        /// <exception cref="ExcecaoRecursoNaoEncontrado ">Lançada se o cliente com o ID especificado não for encontrado.</exception>
+        /// <param name="id">O ID do cliente a ser removido.</param>
+        /// <returns>Retorna verdadeiro se a remoção for bem-sucedida, caso contrário, falso.</returns>
         Task<bool> RemoveCliente(int id);
     }
 }

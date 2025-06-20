@@ -1,27 +1,19 @@
-﻿using System.Text.RegularExpressions;
-using AutoMapper;
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Muralis.Desafio.Api.Data;
 using Muralis.Desafio.Api.Dtos;
-using Muralis.Desafio.Api.Exceptions;
 using Muralis.Desafio.Api.Models;
 using Muralis.Desafio.Api.Services.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace Muralis.Desafio.Api.Services
 {
-    /// <summary>
-    /// Implementação do serviço com a lógica de negócio para gerenciamento de clientes.
-    /// </summary>
     public class ClienteService : IClienteService
     {
         private readonly ApiDbContext _context;
         private readonly IMapper _mapper;
         private readonly IViaCepService _viaCepService;
 
-        /// <summary>
-        /// Inicializa uma nova instância do serviço de cliente.
-        /// </summary>
         public ClienteService(ApiDbContext context, IMapper mapper, IViaCepService viaCepService)
         {
             _context = context;
@@ -46,31 +38,41 @@ namespace Muralis.Desafio.Api.Services
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
                 .FirstOrDefaultAsync(c => c.Id == id);
-
             return _mapper.Map<LeituraClienteDto>(cliente);
         }
 
         /// <inheritdoc />
-        public async Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string name)
+        public async Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string nome)
         {
             var clientes = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
-                .Where(c => c.Nome.Contains(name))
+                .Where(c => EF.Functions.ILike(c.Nome, $"%{nome}%"))
                 .ToListAsync();
             return _mapper.Map<IEnumerable<LeituraClienteDto>>(clientes);
         }
 
         /// <inheritdoc />
+        public async Task<bool> ClienteJaExiste(string nome)
+        {
+            return await _context.Clientes.AnyAsync(c => c.Nome.ToLower() == nome.ToLower());
+        }
+
+        /// <inheritdoc />
         public async Task<LeituraClienteDto> CriaCliente(CriaClienteDto clienteDto)
         {
+            if (await ClienteJaExiste(clienteDto.Nome))
+            {
+                throw new InvalidOperationException($"Já existe um cliente com o nome '{clienteDto.Nome}'.");
+            }
+
             if (!ValidarCep(clienteDto.Endereco.Cep))
                 throw new InvalidOperationException("O CEP informado é inválido.");
 
             var addressFromViaCep = await _viaCepService.ObtemEnderecoPorCep(clienteDto.Endereco.Cep);
-            if (addressFromViaCep == null || string.IsNullOrEmpty(addressFromViaCep.Logradouro))
+            if (addressFromViaCep == null || addressFromViaCep.Erro)
             {
-                throw new InvalidOperationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado");
+                throw new InvalidOperationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado ou inválido.");
             }
 
             var cliente = _mapper.Map<Cliente>(clienteDto);
@@ -87,9 +89,6 @@ namespace Muralis.Desafio.Api.Services
         /// <inheritdoc />
         public async Task<bool> AtualizaCliente(int id, AtualizaClienteDto clienteDto)
         {
-            if (!ValidarCep(clienteDto.Endereco.Cep))
-                throw new InvalidOperationException("O CEP informado é inválido.");
-
             var cliente = await _context.Clientes
                 .Include(c => c.Endereco)
                 .Include(c => c.Contatos)
@@ -99,14 +98,18 @@ namespace Muralis.Desafio.Api.Services
             {
                 return false;
             }
+
+            if (!ValidarCep(clienteDto.Endereco.Cep))
+                throw new InvalidOperationException("O CEP informado é inválido.");
+
             var addressFromViaCep = await _viaCepService.ObtemEnderecoPorCep(clienteDto.Endereco.Cep);
-            if (addressFromViaCep == null || string.IsNullOrEmpty(addressFromViaCep.Logradouro))
+            if (addressFromViaCep == null || addressFromViaCep.Erro)
             {
                 throw new InvalidOperationException($"CEP '{clienteDto.Endereco.Cep}' não encontrado ou inválido.");
             }
 
             _mapper.Map(clienteDto, cliente);
-            AtualizaContatos(clienteDto.Contatos, cliente.Contatos);
+
             cliente.Endereco.Logradouro = addressFromViaCep.Logradouro;
             cliente.Endereco.Cidade = addressFromViaCep.Localidade;
 
@@ -122,37 +125,18 @@ namespace Muralis.Desafio.Api.Services
             {
                 return false;
             }
-
             _context.Clientes.Remove(cliente);
             await _context.SaveChangesAsync();
             return true;
         }
 
-        private void AtualizaContatos(ICollection<ContatoDto> contatosDto, ICollection<Contato> contatosExistentes)
-        {
-            var contatosParaRemover = contatosExistentes
-                .Where(c => !contatosDto.Any(dto => dto.Tipo == c.Tipo && dto.Texto == c.Texto))
-                .ToList();
-            _context.Contatos.RemoveRange(contatosParaRemover);
-
-            var novosContatos = contatosDto
-                .Where(dto => !contatosExistentes.Any(c => c.Tipo == dto.Tipo && c.Texto == dto.Texto))
-                .Select(dto => _mapper.Map<Contato>(dto))
-                .ToList();
-
-            foreach (var novoContato in novosContatos)
-            {
-                contatosExistentes.Add(novoContato);
-            }
-        }
-
         private static bool ValidarCep(string cep)
         {
-            string cepNumerico = Regex.Replace(cep ?? "", @"[^\d]", "");
+            if (string.IsNullOrWhiteSpace(cep))
+                return false;
 
-            return cepNumerico.Length == 8 &&
-                   !Regex.IsMatch(cepNumerico, @"^(\d)\1+$") &&
-                   cepNumerico != "00000000";
+            var cepLimpo = Regex.Replace(cep, "[^0-9]", "");
+            return cepLimpo.Length == 8 && cepLimpo.Distinct().Count() > 1;
         }
     }
 }

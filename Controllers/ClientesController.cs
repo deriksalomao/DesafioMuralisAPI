@@ -1,135 +1,88 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Muralis.Desafio.Api.Dtos;
-using Muralis.Desafio.Api.Models;
 using Muralis.Desafio.Api.Services.Interfaces;
 
 namespace Muralis.Desafio.Api.Controllers
 {
-    /// <summary>
-    /// API para o gerenciamento de clientes.
-    /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class ClientesController : ControllerBase
     {
         private readonly IClienteService _clienteService;
-
-        /// <summary>
-        /// Inicializa uma nova instância do controlador de clientes.
-        /// </summary>
-        /// <param name="clienteService">Serviço para operações de cliente.</param>
         public ClientesController(IClienteService clienteService)
         {
             _clienteService = clienteService;
         }
 
-        /// <summary>
-        /// Obtém uma lista de todos os clientes.
-        /// </summary>
-        /// <returns>Uma lista de clientes.</returns>
-        /// <response code="200">Retorna a lista de clientes.</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<IEnumerable<LeituraClienteDto>>> ListaClientes()
         {
-            var clientes = await _clienteService.ListaClientes();
-            return Ok(clientes);
+            var clientesDto = await _clienteService.ListaClientes();
+            return Ok(clientesDto);
         }
 
-        /// <summary>
-        /// Obtém um cliente específico pelo seu ID.
-        /// </summary>
-        /// <param name="id">O ID do cliente.</param>
-        /// <returns>Os dados do cliente solicitado.</returns>
-        /// <response code="200">Retorna os dados do cliente.</response>
-        /// <response code="404">Se o cliente com o ID especificado não for encontrado.</response>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<LeituraClienteDto>> ObtemClientePorId(int id)
         {
-            var cliente = await _clienteService.ObtemClientePorId(id);
-
-            if (cliente == null)
-                return NotFound($"Cliente com ID {id} não foi encontrado.");
-
-            return Ok(cliente);
+            var clienteDto = await _clienteService.ObtemClientePorId(id);
+            if (clienteDto == null)
+            {
+                return NotFound($"Cliente com id {id} não encontrado");
+            }
+            return Ok(clienteDto);
         }
 
-        /// <summary>
-        /// Pesquisa clientes por nome.
-        /// </summary>
-        /// <param name="nome">O nome ou parte do nome a ser pesquisado.</param>
-        /// <returns>Uma lista de clientes que correspondem ao critério de busca.</returns>
-        /// <response code="200">Retorna a lista de clientes encontrados.</response>
         [HttpGet("pesquisar")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<IEnumerable<LeituraClienteDto>>> BuscaClientePorNome([FromQuery] string nome)
         {
-            var clientes = await _clienteService.BuscaClientePorNome(nome);
-            return Ok(clientes);
+            if (string.IsNullOrWhiteSpace(nome))
+            {
+                return BadRequest("O parâmetro 'nome' para a pesquisa não pode ser vazio.");
+            }
+
+            var clientesDto = await _clienteService.BuscaClientePorNome(nome);
+            return Ok(clientesDto);
         }
 
-        /// <summary>
-        /// Cria um novo cliente.
-        /// </summary>
-        /// <remarks>
-        /// O CEP fornecido é validado através da API ViaCep.
-        /// </remarks>
-        /// <param name="clienteDto">Os dados do novo cliente.</param>
-        /// <returns>A localização do novo recurso criado.</returns>
-        /// <response code="201">Se o cliente foi criado com sucesso. Retorna o cliente criado.</response>
-        /// <response code="400">Se os dados fornecidos são inválidos (ex: CEP não encontrado).</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> CriaCliente([FromBody] CriaClienteDto clienteDto)
+        public async Task<ActionResult<LeituraClienteDto>> CriaCliente([FromBody] CriaClienteDto clienteDto)
         {
-            var novoCliente = await _clienteService.CriaCliente(clienteDto);
-            return CreatedAtAction(nameof(ObtemClientePorId), new { id = novoCliente.Id }, novoCliente);
+            var novoClienteDto = await _clienteService.CriaCliente(clienteDto);
+            return CreatedAtAction(nameof(ObtemClientePorId), new { id = novoClienteDto.Id }, novoClienteDto);
         }
 
-        /// <summary>
-        /// Atualiza os dados de um cliente existente.
-        /// </summary>
-        /// <param name="id">O ID do cliente a ser atualizado.</param>
-        /// <param name="clienteDto">Os novos dados do cliente.</param>
-        /// <returns>Nenhum conteúdo.</returns>
-        /// <response code="204">Se o cliente foi atualizado com sucesso.</response>
-        /// <response code="400">Se os dados fornecidos são inválidos.</response>
-        /// <response code="404">Se o cliente com o ID especificado não foi encontrado.</response>
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AtualizaCliente(int id, [FromBody] AtualizaClienteDto clienteDto)
         {
-            bool clienteEncontradoEAtualizado = await _clienteService.AtualizaCliente(id, clienteDto);
-
-            if (clienteEncontradoEAtualizado == false)
-                return NotFound($"Cliente com ID {id} não foi encontrado.");
-
-            return NoContent();
+            var resultado = await _clienteService.AtualizaCliente(id, clienteDto);
+            if (!resultado)
+            {
+                return NotFound($"Cliente com id {id} não encontrado");
+            }
+            return Ok(new { mensagem = "Dados do cliente foram alterados com sucesso" });
         }
 
-        /// <summary>
-        /// Deleta um cliente existente.
-        /// </summary>
-        /// <param name="id">O ID do cliente a ser deletado.</param>
-        /// <returns>Nenhum conteúdo.</returns>
-        /// <response code="204">Se o cliente foi deletado com sucesso.</response>
-        /// <response code="404">Se o cliente com o ID especificado não foi encontrado.</response>
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(object))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> RemoveCliente(int id)
         {
-            bool clienteEncontradoEDeletado = await _clienteService.RemoveCliente(id);
-            
-            if (clienteEncontradoEDeletado == false)
-                return NotFound($"Cliente com ID {id} não foi encontrado.");
-
-            return NoContent();
+            var resultado = await _clienteService.RemoveCliente(id);
+            if (!resultado)
+            {
+                return NotFound($"Cliente com id {id} não encontrado");
+            }
+            return Ok(new { mensagem = "Cliente removido com sucesso" });
         }
     }
 }

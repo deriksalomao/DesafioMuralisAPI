@@ -4,27 +4,23 @@ using Muralis.Desafio.Api.Models;
 
 namespace Muralis.Desafio.Api.Profiles
 {
-    /// <summary>
-    /// Configura os mapeamentos do AutoMapper entre os modelos de domínio e os DTOs.
-    /// </summary>
     public class ClientesProfile : Profile
     {
-        /// <summary>
-        /// Inicializa uma nova instância do perfil de mapeamento de clientes.
-        /// </summary>
         public ClientesProfile()
         {
-            // Mapeamentos de DTO para Modelo
+            // Mapeamentos para criação e atualização (entrada de dados)
             CreateMap<CriaClienteDto, Cliente>();
-            CreateMap<AtualizaClienteDto, Cliente>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore()); // Ignora o ID na atualização
-            CreateMap<ContatoDto, Contato>();
-            CreateMap<EnderecoDto, Endereco>();
+            CreateMap<AtualizaClienteDto, Cliente>();
 
-            // Mapeamentos de Modelo para DTO
+            // Mapeamentos para DTOs aninhados
+            CreateMap<EnderecoDto, Endereco>();
+            CreateMap<ContatoDto, Contato>();
+
+            // Mapeamento para leitura (saída de dados)
             CreateMap<Cliente, LeituraClienteDto>();
+            // Mapeamentos para DTOs de leitura aninhados
+            CreateMap<Endereco, EnderecoRetornoDto>();
             CreateMap<Contato, ContatoDto>();
-            CreateMap<Endereco, EnderecoDto>();
         }
     }
 }
