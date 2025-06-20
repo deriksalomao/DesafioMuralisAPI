@@ -21,7 +21,6 @@ namespace Muralis.Desafio.Api.Services
             _viaCepService = viaCepService;
         }
 
-        /// <inheritdoc />
         public async Task<IEnumerable<LeituraClienteDto>> ListaClientes()
         {
             var clientes = await _context.Clientes
@@ -31,7 +30,6 @@ namespace Muralis.Desafio.Api.Services
             return _mapper.Map<IEnumerable<LeituraClienteDto>>(clientes);
         }
 
-        /// <inheritdoc />
         public async Task<LeituraClienteDto?> ObtemClientePorId(int id)
         {
             var cliente = await _context.Clientes
@@ -41,7 +39,6 @@ namespace Muralis.Desafio.Api.Services
             return _mapper.Map<LeituraClienteDto>(cliente);
         }
 
-        /// <inheritdoc />
         public async Task<IEnumerable<LeituraClienteDto>> BuscaClientePorNome(string nome)
         {
             var clientes = await _context.Clientes
@@ -52,13 +49,11 @@ namespace Muralis.Desafio.Api.Services
             return _mapper.Map<IEnumerable<LeituraClienteDto>>(clientes);
         }
 
-        /// <inheritdoc />
         public async Task<bool> ClienteJaExiste(string nome)
         {
             return await _context.Clientes.AnyAsync(c => c.Nome.ToLower() == nome.ToLower());
         }
 
-        /// <inheritdoc />
         public async Task<LeituraClienteDto> CriaCliente(CriaClienteDto clienteDto)
         {
             if (await ClienteJaExiste(clienteDto.Nome))
@@ -86,7 +81,6 @@ namespace Muralis.Desafio.Api.Services
             return _mapper.Map<LeituraClienteDto>(cliente);
         }
 
-        /// <inheritdoc />
         public async Task<bool> AtualizaCliente(int id, AtualizaClienteDto clienteDto)
         {
             var cliente = await _context.Clientes
@@ -117,7 +111,6 @@ namespace Muralis.Desafio.Api.Services
             return true;
         }
 
-        /// <inheritdoc />
         public async Task<bool> RemoveCliente(int id)
         {
             var cliente = await _context.Clientes.FindAsync(id);
